@@ -1,0 +1,28 @@
+[logging]
+dir = "/var/log/edgeprobe"
+max_mb = 100
+max_files = 10
+
+[ping]
+interval_ms = 1000
+timeout_ms = 1000
+window_secs = 60
+
+[dns]
+interval_ms = 30000
+timeout_ms = 2000
+queries = ["example.com", "cloudflare.com"]
+resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
+
+[traceroute]
+cooldown_secs = 300
+max_hops = 30
+timeout_ms = 2000
+
+[[targets]]
+name = "cloudflare"
+host = "1.1.1.1"
+
+[[targets]]
+name = "google"
+host = "8.8.8.8"

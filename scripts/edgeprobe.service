@@ -1,0 +1,15 @@
+[Unit]
+Description=Edgeprobe network outage monitor
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/edgeprobe -config /etc/edgeprobe/config.toml
+Restart=always
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

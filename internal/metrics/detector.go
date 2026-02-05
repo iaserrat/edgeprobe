@@ -27,7 +27,6 @@ type Event interface {
 }
 
 type OutageStart struct {
-	Timestamp           time.Time
 	Target              string
 	OutageID            string
 	Reason              string
@@ -39,7 +38,6 @@ type OutageStart struct {
 func (o OutageStart) Type() EventType { return EventOutageStart }
 
 type OutageEnd struct {
-	Timestamp           time.Time
 	Target              string
 	OutageID            string
 	Reason              string
@@ -51,35 +49,34 @@ type OutageEnd struct {
 func (o OutageEnd) Type() EventType { return EventOutageEnd }
 
 type OutageSummary struct {
-	Timestamp            time.Time
-	Target               string
-	OutageID             string
-	StartTS              time.Time
-	EndTS                time.Time
-	DurationMs           int64
-	LossPctMax           float64
-	RttP95MaxMs          float64
-	RttAvgMaxMs          float64
-	ConsecutiveFailMax   int
-	PingSent             int
-	PingRecv             int
-	DNSErrors            int
-	TracerouteCount      int
+	Target             string
+	OutageID           string
+	StartTS            time.Time
+	EndTS              time.Time
+	DurationMs         int64
+	LossPctMax         float64
+	RttP95MaxMs        float64
+	RttAvgMaxMs        float64
+	ConsecutiveFailMax int
+	PingSent           int
+	PingRecv           int
+	DNSErrors          int
+	TracerouteCount    int
 }
 
 func (o OutageSummary) Type() EventType { return EventOutageSummary }
 
 type Detector struct {
-	window      time.Duration
-	mu          sync.Mutex
-	states      map[string]*targetState
-	idCounter   int64
+	window    time.Duration
+	mu        sync.Mutex
+	states    map[string]*targetState
+	idCounter int64
 }
 
 type pingSample struct {
-	ts   time.Time
-	ok   bool
-	rtt  float64
+	ts  time.Time
+	ok  bool
+	rtt float64
 }
 
 type targetState struct {
@@ -90,14 +87,14 @@ type targetState struct {
 	outageStart   time.Time
 	clearSince    *time.Time
 
-	lossPctMax         float64
-	rttP95MaxMs        float64
-	rttAvgMaxMs        float64
-	consecFailMax      int
-	pingSent           int
-	pingRecv           int
-	dnsErrors          int
-	tracerouteCount    int
+	lossPctMax      float64
+	rttP95MaxMs     float64
+	rttAvgMaxMs     float64
+	consecFailMax   int
+	pingSent        int
+	pingRecv        int
+	dnsErrors       int
+	tracerouteCount int
 }
 
 func NewDetector(windowSecs int) *Detector {
@@ -150,12 +147,11 @@ func (d *Detector) ProcessPing(target string, ts time.Time, ok bool, rttMs float
 		}
 
 		events = append(events, OutageStart{
-			Timestamp: ts,
-			Target: target,
-			OutageID: state.outageID,
-			Reason: reason,
-			LossPct: stats.lossPct,
-			RttP95Ms: stats.rttP95,
+			Target:              target,
+			OutageID:            state.outageID,
+			Reason:              reason,
+			LossPct:             stats.lossPct,
+			RttP95Ms:            stats.rttP95,
 			ConsecutiveFailures: state.consecFail,
 		})
 
@@ -191,29 +187,27 @@ func (d *Detector) ProcessPing(target string, ts time.Time, ok bool, rttMs float
 			}
 			if ts.Sub(*state.clearSince) >= d.window {
 				endEvent := OutageEnd{
-					Timestamp: ts,
-					Target: target,
-					OutageID: state.outageID,
-					Reason: "cleared",
-					LossPct: stats.lossPct,
-					RttP95Ms: stats.rttP95,
+					Target:              target,
+					OutageID:            state.outageID,
+					Reason:              "cleared",
+					LossPct:             stats.lossPct,
+					RttP95Ms:            stats.rttP95,
 					ConsecutiveFailures: state.consecFail,
 				}
 				summary := OutageSummary{
-					Timestamp: ts,
-					Target: target,
-					OutageID: state.outageID,
-					StartTS: state.outageStart,
-					EndTS: ts,
-					DurationMs: ts.Sub(state.outageStart).Milliseconds(),
-					LossPctMax: state.lossPctMax,
-					RttP95MaxMs: state.rttP95MaxMs,
-					RttAvgMaxMs: state.rttAvgMaxMs,
+					Target:             target,
+					OutageID:           state.outageID,
+					StartTS:            state.outageStart,
+					EndTS:              ts,
+					DurationMs:         ts.Sub(state.outageStart).Milliseconds(),
+					LossPctMax:         state.lossPctMax,
+					RttP95MaxMs:        state.rttP95MaxMs,
+					RttAvgMaxMs:        state.rttAvgMaxMs,
 					ConsecutiveFailMax: state.consecFailMax,
-					PingSent: state.pingSent,
-					PingRecv: state.pingRecv,
-					DNSErrors: state.dnsErrors,
-					TracerouteCount: state.tracerouteCount,
+					PingSent:           state.pingSent,
+					PingRecv:           state.pingRecv,
+					DNSErrors:          state.dnsErrors,
+					TracerouteCount:    state.tracerouteCount,
 				}
 
 				state.inOutage = false
@@ -281,7 +275,7 @@ func (d *Detector) stateFor(target string) *targetState {
 
 func (d *Detector) nextOutageID(target string, ts time.Time) string {
 	d.idCounter++
-	return fmt.Sprintf("%s-%d-%s", target, ts.UnixNano(), d.idCounter)
+	return fmt.Sprintf("%s-%d-%06d", target, ts.UnixNano(), d.idCounter)
 }
 
 type windowStats struct {

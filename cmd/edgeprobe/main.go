@@ -85,8 +85,8 @@ func run(path string) error {
 					return err
 				}
 			case metrics.OutageSummary:
-				if err := logger.Write(logging.OutageSummary{
-					BaseRecord: logging.BaseRecord{
+				if err := logger.Emit(&logging.OutageSummary{
+					BaseEvent: logging.BaseEvent{
 						Type:     "outage_summary",
 						Target:   evt.Target,
 						OutageID: evt.OutageID,
@@ -116,10 +116,17 @@ type traceRequest struct {
 }
 
 func newLogger(cfg config.Config) (*logging.Logger, error) {
+	hostID, err := os.Hostname()
+	if err != nil || hostID == "" {
+		hostID = "unknown"
+	}
 	return logging.New(logging.Config{
-		Dir:      cfg.Logging.Dir,
-		MaxMB:    cfg.Logging.MaxMB,
-		MaxFiles: cfg.Logging.MaxFiles,
+		Dir:         cfg.Logging.Dir,
+		MaxMB:       cfg.Logging.MaxMB,
+		MaxFiles:    cfg.Logging.MaxFiles,
+		ToolName:    "edgeprobe",
+		ToolVersion: version,
+		HostID:      hostID,
 	})
 }
 
@@ -202,8 +209,8 @@ func startTracerouteWorker(ctx context.Context, cfg config.Config, logger *loggi
 				detector.RecordTraceroute(req.target, req.outageID)
 
 				hops := toLogHops(res.Hops)
-				_ = logger.Write(logging.TracerouteResult{
-					BaseRecord: logging.BaseRecord{
+				_ = logger.Emit(&logging.TracerouteResult{
+					BaseEvent: logging.BaseEvent{
 						Type:     "traceroute_result",
 						Target:   req.target,
 						OutageID: req.outageID,
@@ -216,8 +223,8 @@ func startTracerouteWorker(ctx context.Context, cfg config.Config, logger *loggi
 				if res.Err == "" && res.PathHash != "" {
 					prev := lastPath[req.target]
 					if prev != "" && prev != res.PathHash {
-						_ = logger.Write(logging.PathChange{
-							BaseRecord: logging.BaseRecord{
+						_ = logger.Emit(&logging.PathChange{
+							BaseEvent: logging.BaseEvent{
 								Type:     "path_change",
 								Target:   req.target,
 								OutageID: req.outageID,
@@ -253,8 +260,8 @@ func toLogHops(hops []traceroute.Hop) []logging.TracerouteHop {
 }
 
 func logDegradation(logger *logging.Logger, recordType string, target string, outageID string, reason string, lossPct float64, rttP95 float64, consecutiveFailures int) error {
-	return logger.Write(logging.DegradationRecord{
-		BaseRecord: logging.BaseRecord{
+	return logger.Emit(&logging.DegradationRecord{
+		BaseEvent: logging.BaseEvent{
 			Type:     recordType,
 			Target:   target,
 			OutageID: outageID,

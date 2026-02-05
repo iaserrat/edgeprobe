@@ -2,19 +2,26 @@ package logging
 
 import "time"
 
-type BaseRecord struct {
-	Timestamp time.Time `json:"ts"`
-	Type      string    `json:"type"`
-	Target    string    `json:"target"`
-	OutageID  string    `json:"outage_id"`
+type BaseEvent struct {
+	TSUTC         string `json:"ts_utc"`
+	TSUnixMS      int64  `json:"ts_unix_ms"`
+	Seq           uint64 `json:"seq"`
+	Type          string `json:"type"`
+	Target        string `json:"target"`
+	OutageID      string `json:"outage_id"`
+	SchemaVersion int    `json:"schema_version"`
+	ToolName      string `json:"tool_name"`
+	ToolVersion   string `json:"tool_version"`
+	HostID        string `json:"host_id"`
+	ClockSource   string `json:"clock_source"`
 }
 
-func (b *BaseRecord) SetTimestamp(ts time.Time) {
-	b.Timestamp = ts
+func (b *BaseEvent) Base() *BaseEvent {
+	return b
 }
 
 type DegradationRecord struct {
-	BaseRecord
+	BaseEvent
 	Reason              string  `json:"reason"`
 	LossPct             float64 `json:"loss_pct"`
 	RttP95Ms            float64 `json:"rtt_p95_ms"`
@@ -22,7 +29,7 @@ type DegradationRecord struct {
 }
 
 type OutageSummary struct {
-	BaseRecord
+	BaseEvent
 	StartTS            time.Time `json:"start_ts"`
 	EndTS              time.Time `json:"end_ts"`
 	DurationMs         int64     `json:"duration_ms"`
@@ -37,7 +44,7 @@ type OutageSummary struct {
 }
 
 type TracerouteResult struct {
-	BaseRecord
+	BaseEvent
 	Hops     []TracerouteHop `json:"hops"`
 	PathHash string          `json:"path_hash"`
 	Err      string          `json:"err,omitempty"`
@@ -50,7 +57,7 @@ type TracerouteHop struct {
 }
 
 type PathChange struct {
-	BaseRecord
+	BaseEvent
 	PrevPathHash string          `json:"prev_path_hash"`
 	NewPathHash  string          `json:"new_path_hash"`
 	PrevHops     []TracerouteHop `json:"prev_hops"`
